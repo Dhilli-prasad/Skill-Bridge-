@@ -1,0 +1,36 @@
+import type { CommunityArticle } from '../types/dashboard'
+
+export const communityArticles: CommunityArticle[] = [
+  {
+    id: 'article-1',
+    authorId: 'maya-patel',
+    authorName: 'Maya Patel',
+    authorBio: 'Frontend engineer and accessibility advocate.',
+    title: 'Design systems that help teams move with confidence',
+    subtitle: 'A practical guide to balancing consistency, flexibility, and accessibility.',
+    content: '# Start with decisions\n\nA useful design system makes important product decisions visible. It gives teams a shared language without forcing every screen into the same shape.\n\n## Three foundations\n\n- Document the decisions behind components.\n- Build accessibility into the default states.\n- Keep contribution paths simple.\n\n```tsx\nconst Button = ({ children }: Props) => <button type="button">{children}</button>\n```\n\nThe best systems grow through feedback from the people using them.',
+    category: 'Web Development',
+    tags: ['Design systems', 'Accessibility'],
+    status: 'Published',
+    createdAt: '2026-11-05T09:30:00.000Z',
+    updatedAt: '2026-11-05T09:30:00.000Z',
+    publishedAt: '2026-11-05T09:30:00.000Z',
+    likeCount: 24,
+  },
+  {
+    id: 'article-2',
+    authorId: 'priya-shah',
+    authorName: 'Priya Shah',
+    authorBio: 'Cloud engineer exploring serverless systems.',
+    title: 'A calm path into cloud architecture',
+    subtitle: 'How to learn cloud concepts through small, observable projects.',
+    content: 'Cloud learning becomes more approachable when each project has a clear boundary.\n\n1. Start with one user journey.\n2. Define the failure mode.\n3. Add observability before adding services.\n\n> Small, repeatable experiments build better intuition than memorizing product catalogs.',
+    category: 'AWS and Cloud',
+    tags: ['AWS', 'Cloud architecture'],
+    status: 'Published',
+    createdAt: '2026-11-02T08:00:00.000Z',
+    updatedAt: '2026-11-02T08:00:00.000Z',
+    publishedAt: '2026-11-02T08:00:00.000Z',
+    likeCount: 18,
+  },
+]

@@ -1,0 +1,10 @@
+version = 0.1
+
+[dev]
+[dev.global.parameters]
+stack_name = "skillbridge-dev"
+region = "ap-south-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+fail_on_empty_changeset = false
+parameter_overrides = "EnvironmentName=dev AllowedOrigin=http://127.0.0.1:5173"

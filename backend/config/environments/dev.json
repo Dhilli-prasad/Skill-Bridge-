@@ -1,0 +1,6 @@
+{
+  "environment": "dev",
+  "region": "ap-south-1",
+  "allowedOrigin": "http://127.0.0.1:5173",
+  "notes": "Non-secret defaults only. AWS resource names are resolved by CloudFormation outputs."
+}

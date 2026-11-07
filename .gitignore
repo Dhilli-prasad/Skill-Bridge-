@@ -1,0 +1,74 @@
+# Dependencies and package-manager output
+node_modules/
+.venv/
+venv/
+env/
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+.aws/
+**/.aws/
+credentials
+**/credentials
+secrets/
+**/secrets/
+*.secret
+*.secrets
+*.token
+*.tokens
+*.jwt
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.crt
+*.cer
+
+# Logs and local runtime output
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Frontend and general build output
+dist/
+dist-ssr/
+build/
+coverage/
+*.local
+
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# AWS SAM build artifacts
+.aws-sam/
+
+# Infrastructure state and temporary files
+*.tfstate
+*.tfstate.*
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
