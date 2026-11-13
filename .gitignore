@@ -54,6 +54,7 @@ htmlcov/
 
 # AWS SAM build artifacts
 .aws-sam/
+/backend/changeset-review.json
 
 # Infrastructure state and temporary files
 *.tfstate

@@ -8,3 +8,16 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 fail_on_empty_changeset = false
 parameter_overrides = "EnvironmentName=dev AllowedOrigin=http://127.0.0.1:5173"
+
+[staging]
+[staging.global.parameters]
+stack_name = "skillbridge-staging"
+region = "ap-south-1"
+capabilities = "CAPABILITY_IAM"
+
+[staging.deploy.parameters]
+confirm_changeset = true
+resolve_s3 = true
+fail_on_empty_changeset = false
+# Replace the pending origin with the exact Amplify branch origin before deployment.
+parameter_overrides = "EnvironmentName=staging AllowedOrigin=PENDING_AMPLIFY_BRANCH_ORIGIN"

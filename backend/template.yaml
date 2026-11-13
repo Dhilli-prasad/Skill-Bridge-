@@ -55,6 +55,8 @@ Resources:
 
   ApplicationTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: !Sub skillbridge-${EnvironmentName}
       BillingMode: PAY_PER_REQUEST

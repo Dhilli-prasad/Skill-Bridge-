@@ -34,7 +34,7 @@ function formatDate(value?: string) {
   return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleDateString()
 }
 
-export function PassportContributionPanel({ userId }: { userId: string }) {
+export function PassportContributionPanel({ userId, isCurrentUser = false }: { userId: string; isCurrentUser?: boolean }) {
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [projects, setProjects] = useState<CompletedProject[]>([])
   const [loading, setLoading] = useState(apiMode)
@@ -44,7 +44,7 @@ export function PassportContributionPanel({ userId }: { userId: string }) {
     if (!apiMode) return
     let active = true
     const pathId = encodeURIComponent(userId)
-    const prefix = userId === 'demo-user-aarav-kumar' ? '/users/me' : `/users/${pathId}`
+    const prefix = isCurrentUser ? '/users/me' : `/users/${pathId}`
     Promise.all([
       apiRequest<ContributionResponse>(`${prefix}/contributions`, { requireAuthentication: true }),
       apiRequest<CompletedProjectResponse>(`${prefix}/completed-projects`, { requireAuthentication: true }),
@@ -56,7 +56,7 @@ export function PassportContributionPanel({ userId }: { userId: string }) {
       if (active) setError(requestError instanceof Error ? requestError.message : 'Unable to load verified contributions.')
     }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [userId])
+  }, [userId, isCurrentUser])
 
   return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="verified-contributions-heading">
     <div className="flex flex-wrap items-start justify-between gap-3">

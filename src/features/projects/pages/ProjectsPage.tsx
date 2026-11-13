@@ -5,8 +5,14 @@ import { getDeveloperProfile } from '../../../services/developerProfileService'
 import { getProjects, getProjectsForUser } from '../../../services/projectService'
 import { COMMUNITY_CHANGED_EVENT } from '../../../services/communityService'
 import { DeveloperAvatar } from '../../community/components/DeveloperLink'
+import { ApiProjectsPage } from './api/ApiProjectsPage'
+import { isProjectApiMode } from '../../../services/projectApi'
 
 export function ProjectsPage() {
+  return isProjectApiMode() ? <ApiProjectsPage /> : <DemoProjectsPage />
+}
+
+function DemoProjectsPage() {
   const [, refresh] = useState(0)
   useEffect(() => { const update = () => refresh((value) => value + 1); window.addEventListener(COMMUNITY_CHANGED_EVENT, update); return () => window.removeEventListener(COMMUNITY_CHANGED_EVENT, update) }, [])
   const [query, setQuery] = useState('')

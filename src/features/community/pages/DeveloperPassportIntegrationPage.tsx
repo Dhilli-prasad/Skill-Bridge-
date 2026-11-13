@@ -8,7 +8,7 @@ export function DeveloperPassportIntegrationPage() {
   return <>
     <DeveloperPassportPage />
     <div className="mx-auto mt-6 max-w-6xl">
-      <PassportContributionPanel userId={developerId ?? COMMUNITY_USER_ID} />
+      <PassportContributionPanel userId={developerId ?? COMMUNITY_USER_ID} isCurrentUser={!developerId} />
     </div>
   </>
 }

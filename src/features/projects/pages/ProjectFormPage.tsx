@@ -3,10 +3,16 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getProject, createProject, updateProject, type ProjectInput } from '../../../services/projectService'
 import type { LearningDifficulty, ProjectStatus } from '../../../types/dashboard'
+import { isProjectApiMode } from '../../../services/projectApi'
+import { ApiProjectFormPage } from './api/ApiProjectFormPage'
 
 const split = (value: string) => value.split(/\n|,/).map((item) => item.trim()).filter(Boolean)
 
 export function ProjectFormPage() {
+  return isProjectApiMode() ? <ApiProjectFormPage /> : <DemoProjectFormPage />
+}
+
+function DemoProjectFormPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const existing = projectId ? getProject(projectId) : undefined

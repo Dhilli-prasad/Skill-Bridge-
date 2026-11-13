@@ -7,8 +7,14 @@ import { deleteProject, getProject, getProjectMemberships, isProjectMember, join
 import { COMMUNITY_CHANGED_EVENT, COMMUNITY_USER_ID } from '../../../services/communityService'
 import type { ProjectRole } from '../../../types/dashboard'
 import { ProjectCollaborationPanel } from '../components/ProjectCollaborationPanel'
+import { isProjectApiMode } from '../../../services/projectApi'
+import { ApiProjectDetailPage } from './api/ApiProjectDetailPage'
 
 export function ProjectDetailPage() {
+  return isProjectApiMode() ? <ApiProjectDetailPage /> : <DemoProjectDetailPage />
+}
+
+function DemoProjectDetailPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const [, refresh] = useState(0)
