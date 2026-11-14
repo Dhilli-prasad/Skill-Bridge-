@@ -49,7 +49,13 @@ export function createApiClient(baseUrl: string, session?: ApiAuthSession) {
     const { accessToken, requireAuthentication = false, ...requestInit } = options
     let token = accessToken ?? clientAccessToken
     if (!token && session) token = await session.getAccessToken()
-    if (requireAuthentication && !token) throw new ApiClientError(401, 'Sign in is required for AWS API mode.')
+    if (requireAuthentication && !token) {
+      if (session) {
+        session.clearSession?.()
+        throw new ApiClientError(401, 'Your session has expired. Please sign in again.')
+      }
+      throw new ApiClientError(401, 'Sign in is required for AWS API mode.')
+    }
     const normalizedBaseUrl = baseUrl.replace(/\/$/, '')
     const normalizedPath = path.startsWith('/') ? path : `/${path}`
     const apiPath = normalizedPath === '/api' || normalizedPath.startsWith('/api/') ? normalizedPath : `/api${normalizedPath}`

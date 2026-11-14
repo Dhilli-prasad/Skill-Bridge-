@@ -1,9 +1,14 @@
 import { Amplify } from 'aws-amplify'
 import {
+  confirmResetPassword,
+  confirmSignUp,
   fetchAuthSession,
   getCurrentUser,
+  resendSignUpCode,
+  resetPassword,
   signIn,
   signOut,
+  signUp,
   type AuthUser,
 } from 'aws-amplify/auth'
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito'
@@ -21,9 +26,6 @@ function configureCognito() {
   const config = getCognitoConfig()
   if (!config) return false
 
-  // Amplify's token provider owns refresh-token handling. Session storage keeps
-  // the browser session restorable within a tab without persisting tokens in
-  // localStorage. The backend remains the source of identity and authorization.
   cognitoUserPoolsTokenProvider.setKeyValueStorage(sessionStorage)
   Amplify.configure({
     Auth: {
@@ -36,6 +38,12 @@ function configureCognito() {
   })
   configured = true
   return true
+}
+
+function requireCognito() {
+  if (!configureCognito()) {
+    throw new Error('Cognito is not configured for this environment.')
+  }
 }
 
 export function getCurrentCognitoUser(): Promise<AuthUser | undefined> {
@@ -54,10 +62,57 @@ export async function getAccessToken(forceRefresh = false) {
 }
 
 export async function signInWithCognito(username: string, password: string) {
-  if (!configureCognito()) throw new Error('Cognito is not configured for this environment.')
-  const result = await signIn({ username: username.trim(), password })
-  if (!result.isSignedIn) throw new Error('Additional Cognito sign-in verification is required.')
+  requireCognito()
+  const result = await signIn({ username: username.trim().toLowerCase(), password })
+  if (!result.isSignedIn) {
+    throw new Error('Additional Cognito sign-in verification is required.')
+  }
   return getCurrentUser()
+}
+
+export async function signUpWithCognito(name: string, email: string, password: string) {
+  requireCognito()
+  return signUp({
+    username: email.trim().toLowerCase(),
+    password,
+    options: {
+      userAttributes: {
+        email: email.trim().toLowerCase(),
+        name: name.trim(),
+      },
+    },
+  })
+}
+
+export async function confirmSignUpWithCognito(email: string, code: string) {
+  requireCognito()
+  return confirmSignUp({
+    username: email.trim().toLowerCase(),
+    confirmationCode: code.trim(),
+  })
+}
+
+export async function resendSignUpCodeWithCognito(email: string) {
+  requireCognito()
+  return resendSignUpCode({ username: email.trim().toLowerCase() })
+}
+
+export async function resetPasswordWithCognito(email: string) {
+  requireCognito()
+  return resetPassword({ username: email.trim().toLowerCase() })
+}
+
+export async function confirmResetPasswordWithCognito(
+  email: string,
+  code: string,
+  newPassword: string,
+) {
+  requireCognito()
+  return confirmResetPassword({
+    username: email.trim().toLowerCase(),
+    confirmationCode: code.trim(),
+    newPassword,
+  })
 }
 
 export async function signOutFromCognito() {

@@ -27,6 +27,10 @@ import { DeveloperPassportIntegrationPage } from '../features/community/pages/De
 import { SkillExchangePage } from '../features/exchange/pages/SkillExchangePage'
 import { CodeArenaPage } from '../features/code-arena/pages/CodeArenaPage'
 import { SignInPage } from '../features/auth/pages/SignInPage'
+import { SignUpPage } from '../features/auth/pages/SignUpPage'
+import { VerifyEmailPage } from '../features/auth/pages/VerifyEmailPage'
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 import { ProtectedRoute } from '../auth/ProtectedRoute'
 
 const modulePages = [
@@ -58,6 +62,10 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/sign-up" element={<SignUpPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/circles" element={<CirclesPage />} />
           <Route path="/circles/:circleId" element={<CirclesPage />} />
           <Route path="/circles/create" element={<CreateCirclePage />} />

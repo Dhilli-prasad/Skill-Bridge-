@@ -4,6 +4,32 @@ import { createApiClient } from './apiClient'
 afterEach(() => vi.restoreAllMocks())
 
 describe('authenticated API client', () => {
+  it('rejects protected requests without a session before calling fetch', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    const request = createApiClient('https://api.example')
+    await expect(request('/projects', { requireAuthentication: true })).rejects.toMatchObject({
+      status: 401,
+      message: 'Sign in is required for AWS API mode.',
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('clears an expired session when no access token can be restored', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+    const clearSession = vi.fn()
+    const request = createApiClient('https://api.example', {
+      getAccessToken: async () => undefined,
+      refreshAccessToken: async () => undefined,
+      clearSession,
+    })
+    await expect(request('/projects', { requireAuthentication: true })).rejects.toMatchObject({
+      status: 401,
+      message: 'Your session has expired. Please sign in again.',
+    })
+    expect(clearSession).toHaveBeenCalledOnce()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('attaches the current access token as a Bearer header', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
     const request = createApiClient('https://api.example', { getAccessToken: async () => 'access-token', refreshAccessToken: async () => undefined })

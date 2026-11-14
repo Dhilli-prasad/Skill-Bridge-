@@ -30,7 +30,7 @@ The default frontend mode is local demo mode. It uses existing mock data and loc
 
 ## Cognito and AWS API mode
 
-The frontend uses AWS Amplify Auth v6 with a Cognito User Pool and public app client. Copy `.env.example` to a local `.env` file only when a reviewed backend environment is available, then set:
+The frontend uses AWS Amplify Auth v6 with a Cognito User Pool and public app client. It signs in with SRP (no client secret), restores the session from tab-scoped session storage, refreshes access tokens through Amplify, and clears expired sessions. Copy `.env.example` to `.env.local` only when a reviewed backend environment is available. The six supported Vite variables are:
 
 - `VITE_API_BASE_URL` — deployed API Gateway stage URL.
 - `VITE_COGNITO_REGION` — deployed Cognito region.
@@ -38,7 +38,7 @@ The frontend uses AWS Amplify Auth v6 with a Cognito User Pool and public app cl
 - `VITE_COGNITO_USER_POOL_CLIENT_ID` — public Cognito app-client output.
 - `VITE_PROJECT_COLLABORATION_MODE=api` and/or `VITE_DEVELOPER_PASSPORT_MODE=api` — explicit module opt-in.
 
-The app uses Cognito SRP sign-in and SDK-managed refresh. Access tokens are attached to protected API requests and stored only in session-scoped browser storage. API failures are shown to the user; they do not silently fall back to local demo data.
+The Cognito values are public identifiers; never set a client secret or AWS credential in Vite variables. Access tokens are attached as bearer tokens to protected API requests. Protected API failures are shown to the user and never silently fall back to localStorage or demo data. Keep both mode switches unset to preserve the local demo experience.
 
 ## Backend prerequisites
 
