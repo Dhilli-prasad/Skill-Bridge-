@@ -11,6 +11,7 @@ import { useCircleMemberships } from '../../../hooks/useCircleMemberships'
 import { getCircleMemberCount, isMember } from '../../../services/circleMembership'
 import type { LearningCircle } from '../../../types/dashboard'
 import { Icon } from '../../../components/Icon'
+import { ProfileSummaryCard } from '../../profile/components/ProfileSummaryCard'
 
 function CircleDetails({ circle, onClose, isJoined, onJoin, onLeave, onFeedback }: { circle: LearningCircle; onClose: () => void; isJoined: boolean; onJoin: (circle: LearningCircle) => void; onLeave: (circle: LearningCircle) => void; onFeedback: (message: string) => void }) {
   const isFull = circle.members >= circle.capacity
@@ -65,7 +66,7 @@ export function CirclesPage() {
     handleCloseDetails()
   }
 
-  return <div className="space-y-6">
+  return <div className="space-y-6"><ProfileSummaryCard self />
     <header className="flex flex-col gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.14em] text-indigo-600">Find your people</p><h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Learning Circles</h1><p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">Find your people. Share your goals. Grow together.</p></div><div className="flex flex-col gap-2 sm:flex-row"><Link to="/circles/my-circles" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"><Icon name="users-round" size={17} /> My circles</Link><Link to="/circles/create" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"><Icon name="plus" size={17} /> Create circle</Link></div></header>
     {feedback && <div role="status" aria-live="polite" className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"><span>{feedback}</span><button type="button" onClick={() => setFeedback('')} aria-label="Dismiss notification" className="flex min-h-8 min-w-8 items-center justify-center rounded-md hover:bg-emerald-100"><Icon name="x" size={16} /></button></div>}
     <CircleFilters search={search} category={category} difficulty={difficulty} sort={sort} onSearchChange={setSearch} onCategoryChange={setCategory} onDifficultyChange={setDifficulty} onSortChange={setSort} onClear={clearFilters} hasFilters={hasFilters} />

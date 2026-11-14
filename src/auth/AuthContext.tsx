@@ -4,6 +4,7 @@ import { configureApiAuthSession } from '../services/apiClient'
 import {
   getAccessToken,
   getCurrentCognitoUser,
+  getCognitoDisplayName,
   isCognitoConfigured,
   signInWithCognito,
   signOutFromCognito,
@@ -14,6 +15,7 @@ import {
   confirmResetPasswordWithCognito,
 } from './cognito'
 import { resolveAuthStatus } from './authState'
+import { toAuthErrorMessage } from './authErrors'
 import {
   AuthContext,
   type AuthProviderProps,
@@ -22,22 +24,36 @@ import {
 } from './context'
 import type { AuthUser } from 'aws-amplify/auth'
 
-function authErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) return error.message
-  return 'We could not complete authentication. Please try again.'
-}
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const configured = isCognitoConfigured()
   const [status, setStatus] = useState<AuthStatus>(
     configured ? 'loading' : resolveAuthStatus(false, false, false),
   )
   const [user, setUser] = useState<AuthUser>()
+  const [displayName, setDisplayName] = useState<string>()
   const [error, setError] = useState<string>()
+
+  const disconnectApiSession = useCallback(() => configureApiAuthSession(undefined), [])
+  const connectApiSession = useCallback(() => {
+    if (!configured) return disconnectApiSession()
+    configureApiAuthSession({
+      getAccessToken: () => getAccessToken(),
+      refreshAccessToken: () => getAccessToken(true),
+      clearSession: () => {
+        disconnectApiSession()
+        void signOutFromCognito().catch(() => undefined)
+        setUser(undefined)
+        setDisplayName(undefined)
+        setStatus(resolveAuthStatus(true, false, false))
+        setError('Your session has expired. Please sign in again.')
+      },
+    })
+  }, [configured, disconnectApiSession])
 
   const syncSession = useCallback(async () => {
     if (!configured) {
       setUser(undefined)
+      setDisplayName(undefined)
       return
     }
 
@@ -46,28 +62,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (currentUser && accessToken) {
       setUser(currentUser)
+      setDisplayName(await getCognitoDisplayName())
       setStatus(resolveAuthStatus(true, true, true))
     } else {
       setUser(undefined)
+      setDisplayName(undefined)
       setStatus(resolveAuthStatus(true, false, false))
     }
   }, [configured])
 
   useEffect(() => {
-    configureApiAuthSession(
-      configured
-        ? {
-            getAccessToken: () => getAccessToken(),
-            refreshAccessToken: () => getAccessToken(true),
-            clearSession: () => {
-              void signOutFromCognito().catch(() => undefined)
-              setUser(undefined)
-              setStatus(resolveAuthStatus(true, false, false))
-              setError('Your session has expired. Please sign in again.')
-            },
-          }
-        : undefined,
-    )
+    connectApiSession()
 
     if (!configured) return
 
@@ -76,12 +81,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, 0)
 
     return () => window.clearTimeout(restoreTask)
-  }, [configured, syncSession])
+  }, [configured, connectApiSession, syncSession])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
       user,
+      displayName,
       error,
 
       signIn: async (username, password) => {
@@ -98,23 +104,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
 
           setUser(signedInUser)
+          setDisplayName(await getCognitoDisplayName())
           setStatus(resolveAuthStatus(true, true, true))
+          connectApiSession()
         } catch (signInError) {
           setStatus(resolveAuthStatus(true, false, false))
 
-          const rawMessage = authErrorMessage(signInError)
-          const message =
-            rawMessage.includes('Incorrect username or password') ||
-            rawMessage.includes('NotAuthorizedException')
-              ? 'The email or password is incorrect.'
-              : rawMessage.includes('UserNotFoundException')
-                ? 'No account was found for that email address.'
-                : rawMessage.includes('UserNotConfirmedException')
-                  ? 'Confirm your email address before signing in.'
-                  : rawMessage
-
+          const message = toAuthErrorMessage(signInError, 'signIn')
           setError(message)
-          throw signInError
+          throw new Error(message, { cause: signInError })
         }
       },
 
@@ -125,8 +123,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const result = await signUpWithCognito(name, email, password)
           return !result.isSignUpComplete
         } catch (signUpError) {
-          setError(authErrorMessage(signUpError))
-          throw signUpError
+          const message = toAuthErrorMessage(signUpError, 'signUp')
+          setError(message)
+          throw new Error(message, { cause: signUpError })
         }
       },
 
@@ -137,8 +136,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const result = await confirmSignUpWithCognito(email, code)
           return result.isSignUpComplete
         } catch (confirmationError) {
-          setError(authErrorMessage(confirmationError))
-          throw confirmationError
+          const message = toAuthErrorMessage(confirmationError, 'verify')
+          setError(message)
+          throw new Error(message, { cause: confirmationError })
         }
       },
 
@@ -148,8 +148,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await resendSignUpCodeWithCognito(email)
         } catch (resendError) {
-          setError(authErrorMessage(resendError))
-          throw resendError
+          const message = toAuthErrorMessage(resendError, 'verify')
+          setError(message)
+          throw new Error(message, { cause: resendError })
         }
       },
 
@@ -159,8 +160,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await resetPasswordWithCognito(email)
         } catch (resetError) {
-          setError(authErrorMessage(resetError))
-          throw resetError
+          const message = toAuthErrorMessage(resetError, 'reset')
+          setError(message)
+          throw new Error(message, { cause: resetError })
         }
       },
 
@@ -170,16 +172,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await confirmResetPasswordWithCognito(email, code, newPassword)
         } catch (confirmationError) {
-          setError(authErrorMessage(confirmationError))
-          throw confirmationError
+          const message = toAuthErrorMessage(confirmationError, 'reset')
+          setError(message)
+          throw new Error(message, { cause: confirmationError })
         }
       },
 
       signOut: async () => {
+        disconnectApiSession()
         try {
           await signOutFromCognito()
         } finally {
           setUser(undefined)
+          setDisplayName(undefined)
           setStatus(
             configured
               ? resolveAuthStatus(true, false, false)
@@ -191,7 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       clearError: () => setError(undefined),
     }),
-    [configured, error, status, user],
+    [configured, connectApiSession, disconnectApiSession, displayName, error, status, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

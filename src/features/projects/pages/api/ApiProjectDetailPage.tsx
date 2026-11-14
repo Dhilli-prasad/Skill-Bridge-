@@ -6,11 +6,15 @@ import { createJoinRequest, getApiProject, listJoinRequests, listProjectMembers,
 import type { CollaborationProject, ProjectRole } from '../../../../types/dashboard'
 import { ProjectCollaborationPanel } from '../../components/ProjectCollaborationPanel'
 import { ProjectPlanningPanel } from '../../components/ProjectPlanningPanel'
+import { getProfiles } from '../../../../services/profileApi'
+import type { ProfileRecord } from '../../../../types/profile'
+import { ProfileIdentity } from '../../../profile/components/ProfileIdentity'
 
 export function ApiProjectDetailPage() {
   const { projectId = '' } = useParams()
   const [project, setProject] = useState<CollaborationProject>()
   const [members, setMembers] = useState<ProjectMember[]>([])
+  const [memberProfiles, setMemberProfiles] = useState<Record<string, ProfileRecord>>({})
   const [requests, setRequests] = useState<JoinRequest[]>([])
   const [userId, setUserId] = useState('')
   const [joinRole, setJoinRole] = useState<Exclude<ProjectRole, 'Owner'>>('Contributor')
@@ -22,6 +26,8 @@ export function ApiProjectDetailPage() {
   const refresh = useCallback(async () => {
     const [item, team, currentUser] = await Promise.all([getApiProject(projectId), listProjectMembers(projectId), getCurrentCognitoUser()])
     setProject(item); setMembers(team); setUserId(currentUser?.userId ?? '')
+    const profiles = await getProfiles(team.map((member) => member.userId))
+    setMemberProfiles(Object.fromEntries(profiles.map((profile) => [profile.id, profile])))
     if (team.some((member) => member.userId === currentUser?.userId && member.role === 'Owner')) {
       const requestsResult = await listJoinRequests(projectId)
       setRequests(requestsResult.data.filter((request) => request.status === 'pending'))
@@ -33,6 +39,8 @@ export function ApiProjectDetailPage() {
     Promise.all([getApiProject(projectId), listProjectMembers(projectId), getCurrentCognitoUser()]).then(async ([item, team, user]) => {
       if (!active) return
       setProject(item); setMembers(team); setUserId(user?.userId ?? '')
+      const profiles = await getProfiles(team.map((member) => member.userId))
+      if (active) setMemberProfiles(Object.fromEntries(profiles.map((profile) => [profile.id, profile])))
       if (team.some((member) => member.userId === user?.userId && member.role === 'Owner')) {
         const requestResult = await listJoinRequests(projectId)
         if (active) setRequests(requestResult.data.filter((request) => request.status === 'pending'))
@@ -65,7 +73,7 @@ export function ApiProjectDetailPage() {
     <ProjectCollaborationPanel projectId={project.id} canManage={isOwner} currentUserId={userId} isMember={isMember} />
     <ProjectPlanningPanel projectId={project.id} canManage={isOwner} members={members} currentUserId={userId} />
     <div className="grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-bold text-slate-950">Goals and outcomes</h2><h3 className="mt-4 text-sm font-semibold text-slate-700">Goals</h3><ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-slate-600">{project.goals.map((goal) => <li key={goal}>{goal}</li>)}</ul><h3 className="mt-4 text-sm font-semibold text-slate-700">Expected outcomes</h3><ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-slate-600">{project.outcomes.map((outcome) => <li key={outcome}>{outcome}</li>)}</ul></section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-bold text-slate-950">Team</h2><p className="mt-1 text-sm text-slate-500">{members.length} of {project.capacity} members</p><div className="mt-4 space-y-3">{members.map((member) => <div key={member.userId} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"><span className="truncate text-sm font-medium text-slate-700">{member.userId}</span><span className="ml-2 text-xs font-semibold text-slate-500">{member.role}</span></div>)}</div></section></div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-bold text-slate-950">Team</h2><p className="mt-1 text-sm text-slate-500">{members.length} of {project.capacity} members</p><div className="mt-4 space-y-3">{members.map((member) => <div key={member.userId} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"><ProfileIdentity profile={memberProfiles[member.userId]} fallbackName={member.userId} /><span className="ml-2 text-xs font-semibold text-slate-500">{member.role}</span></div>)}</div></section></div>
     {isOwner && requests.length > 0 && <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-xl font-bold text-slate-950">Join requests</h2><div className="mt-4 space-y-3">{requests.map((request) => <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 p-3"><div><p className="text-sm font-semibold text-slate-800">{request.requesterId}</p><p className="text-xs text-slate-500">{request.role} · {new Date(request.createdAt).toLocaleDateString()}</p></div><div className="flex gap-2"><button disabled={busy} onClick={() => void act(() => reviewJoinRequest(project.id, request.id, 'approve'), 'Join request approved.')} className="min-h-9 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white disabled:opacity-50">Approve</button><button disabled={busy} onClick={() => void act(() => reviewJoinRequest(project.id, request.id, 'reject'))} className="min-h-9 rounded-lg border border-rose-200 px-3 text-xs font-semibold text-rose-700 disabled:opacity-50">Reject</button></div></div>)}</div></section>}
     {owner && <p className="text-xs text-slate-400">Project owner: {owner.userId}</p>}
   </div>

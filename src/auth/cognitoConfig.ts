@@ -13,6 +13,9 @@ export function getCognitoConfig(): CognitoConfig | undefined {
   const userPoolId = readValue(import.meta.env.VITE_COGNITO_USER_POOL_ID)
   const userPoolClientId = readValue(import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID)
   if (!region || !userPoolId || !userPoolClientId) return undefined
+  if (!/^[a-z]{2}(?:-[a-z]+)+-\d$/.test(region)) return undefined
+  if (!userPoolId.startsWith(`${region}_`) || !new RegExp(`^${region}_[A-Za-z0-9]+$`).test(userPoolId)) return undefined
+  if (!/^[A-Za-z0-9]+$/.test(userPoolClientId)) return undefined
   return { region, userPoolId, userPoolClientId }
 }
 

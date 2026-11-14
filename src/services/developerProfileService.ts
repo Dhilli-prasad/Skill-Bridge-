@@ -82,12 +82,13 @@ export function updateDeveloperProfile(input: UpdateDeveloperProfileInput) {
   const location = input.location.trim()
   const skills = input.skills.map((skill) => skill.trim()).filter(Boolean).slice(0, 12)
   const interests = input.interests.map((interest) => interest.trim()).filter(Boolean).slice(0, 8)
-  if (!fullName || !username || !bio) return { ok: false as const, message: 'Name, username, and bio are required.' }
+  if (!fullName || !username) return { ok: false as const, message: 'Name and username are required.' }
   if (fullName.length > 80 || username.length > 35 || bio.length > 280 || location.length > 80) return { ok: false as const, message: 'Please keep profile fields within their character limits.' }
   if (!/^[a-z0-9._-]+$/.test(username)) return { ok: false as const, message: 'Username may contain letters, numbers, dots, underscores, and hyphens.' }
   const current = getDeveloperProfile(COMMUNITY_USER_ID)
   if (!current) return { ok: false as const, message: 'Demo profile is unavailable.' }
-  const updated: DeveloperProfile = { ...current, fullName, username, bio, location: location || undefined, skills, interests, githubUrl: input.githubUrl.trim() || undefined, linkedinUrl: input.linkedinUrl.trim() || undefined }
+  const portfolioUrl = input.portfolioUrl?.trim() || undefined
+  const updated: DeveloperProfile = { ...current, fullName, username, bio, location: location || undefined, skills, interests, githubUrl: input.githubUrl.trim() || undefined, linkedinUrl: input.linkedinUrl.trim() || undefined, portfolioUrl, experienceLevel: input.experienceLevel ?? current.experienceLevel ?? 'Beginner' }
   const profiles = storedProfiles().filter((profile) => profile.id !== COMMUNITY_USER_ID)
   return save(PROFILES_KEY, [...profiles, updated], 'profile') ? { ok: true as const, message: 'Profile updated.', profile: updated } : { ok: false as const, message: 'We could not save your profile.' }
 }

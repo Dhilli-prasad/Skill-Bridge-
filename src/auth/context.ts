@@ -11,6 +11,7 @@ export type AuthStatus =
 export interface AuthContextValue {
   status: AuthStatus
   user?: AuthUser
+  displayName?: string
   error?: string
   signIn: (username: string, password: string) => Promise<void>
   signOut: () => Promise<void>

@@ -11,6 +11,14 @@ Parameters:
     Type: String
     Default: http://127.0.0.1:5173
     Description: Exact browser origin allowed by API Gateway CORS.
+  AdditionalAllowedOrigin:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$'
+    Description: Optional second exact browser origin, such as the local Vite origin.
+
+Conditions:
+  HasAdditionalAllowedOrigin: !Not [!Equals [!Ref AdditionalAllowedOrigin, '']]
 
 Globals:
   Function:
@@ -23,6 +31,7 @@ Globals:
         ENVIRONMENT: !Ref EnvironmentName
         TABLE_NAME: !Ref ApplicationTable
         ALLOWED_ORIGIN: !Ref AllowedOrigin
+        PROFILE_PHOTO_BUCKET: !Ref ProfilePhotoBucket
 
 Resources:
   UserPool:
@@ -86,6 +95,38 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  ProfilePhotoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: !If
+            - HasAdditionalAllowedOrigin
+            - [!Ref AllowedOrigin, !Ref AdditionalAllowedOrigin]
+            - [!Ref AllowedOrigin]
+            AllowedMethods:
+              - GET
+              - POST
+            AllowedHeaders:
+              - '*'
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+
   ApiFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -100,14 +141,17 @@ Resources:
       Name: !Sub skillbridge-${EnvironmentName}
       StageName: !Ref EnvironmentName
       CorsConfiguration:
-        AllowOrigins:
-          - !Ref AllowedOrigin
+        AllowOrigins: !If
+          - HasAdditionalAllowedOrigin
+          - [!Ref AllowedOrigin, !Ref AdditionalAllowedOrigin]
+          - [!Ref AllowedOrigin]
         AllowHeaders:
           - Authorization
           - Content-Type
         AllowMethods:
           - GET
           - POST
+          - PUT
           - PATCH
           - DELETE
           - OPTIONS
@@ -140,6 +184,13 @@ Resources:
               Resource:
                 - !GetAtt ApplicationTable.Arn
                 - !Sub '${ApplicationTable.Arn}/index/*'
+            - Sid: ProfilePhotoAccess
+              Effect: Allow
+              Action:
+                - s3:DeleteObject
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub '${ProfilePhotoBucket.Arn}/profile-images/*'
       Events:
         Health:
           Type: HttpApi
@@ -168,6 +219,12 @@ Outputs:
   UserPoolClientId:
     Description: Cognito web app client ID
     Value: !Ref UserPoolClient
+  CognitoRegion:
+    Description: AWS Region containing the Cognito User Pool
+    Value: !Ref AWS::Region
   ApplicationTableName:
     Description: DynamoDB application table name
     Value: !Ref ApplicationTable
+  ProfilePhotoBucketName:
+    Description: Private S3 bucket for authenticated profile photos
+    Value: !Ref ProfilePhotoBucket

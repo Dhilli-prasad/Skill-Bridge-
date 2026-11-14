@@ -4,6 +4,7 @@ const authMocks = vi.hoisted(() => ({
   confirmResetPassword: vi.fn(),
   confirmSignUp: vi.fn(),
   fetchAuthSession: vi.fn(),
+  fetchUserAttributes: vi.fn(),
   getCurrentUser: vi.fn(),
   resendSignUpCode: vi.fn(),
   resetPassword: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('aws-amplify/auth', () => ({
   confirmResetPassword: authMocks.confirmResetPassword,
   confirmSignUp: authMocks.confirmSignUp,
   fetchAuthSession: authMocks.fetchAuthSession,
+  fetchUserAttributes: authMocks.fetchUserAttributes,
   getCurrentUser: authMocks.getCurrentUser,
   resendSignUpCode: authMocks.resendSignUpCode,
   resetPassword: authMocks.resetPassword,
@@ -38,6 +40,7 @@ import {
   confirmResetPasswordWithCognito,
   confirmSignUpWithCognito,
   getAccessToken,
+  getCognitoDisplayName,
   getCurrentCognitoUser,
   resendSignUpCodeWithCognito,
   resetPasswordWithCognito,
@@ -97,5 +100,10 @@ describe('Cognito service', () => {
     expect(authMocks.fetchAuthSession).toHaveBeenCalledWith({ forceRefresh: true })
     await signOutFromCognito()
     expect(authMocks.signOut).toHaveBeenCalledOnce()
+  })
+
+  it('reads the Cognito name attribute for the signed-in user label', async () => {
+    authMocks.fetchUserAttributes.mockResolvedValue({ name: 'Ada Lovelace' })
+    await expect(getCognitoDisplayName()).resolves.toBe('Ada Lovelace')
   })
 })

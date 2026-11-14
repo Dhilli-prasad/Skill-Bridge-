@@ -19,5 +19,4 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 fail_on_empty_changeset = false
-# Replace the pending origin with the exact Amplify branch origin before deployment.
-parameter_overrides = "EnvironmentName=staging AllowedOrigin=PENDING_AMPLIFY_BRANCH_ORIGIN"
+parameter_overrides = "EnvironmentName=staging AllowedOrigin=https://main.d3j0bg739p5k2s.amplifyapp.com AdditionalAllowedOrigin=http://localhost:5173"

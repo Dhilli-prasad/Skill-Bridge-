@@ -9,6 +9,7 @@ export const navItems: NavItem[] = [
   { label: 'Skill Exchange', path: '/skill-exchange', icon: 'repeat-2' },
   { label: 'Project Collaboration', path: '/projects', icon: 'folder-kanban' },
   { label: 'Developer Passport', path: '/passport', icon: 'badge-check' },
+  { label: 'My Profile', path: '/profile', icon: 'circle-user-round' },
 ]
 
 export const stats: Stat[] = [

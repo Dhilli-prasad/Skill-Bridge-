@@ -32,6 +32,9 @@ import { VerifyEmailPage } from '../features/auth/pages/VerifyEmailPage'
 import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
 import { ProtectedRoute } from '../auth/ProtectedRoute'
+import { GuestOnlyRoute } from '../auth/GuestOnlyRoute'
+import { ProfilePage } from '../features/profile/pages/ProfilePage'
+import { isProfileApiEnabled } from '../services/profileApi'
 
 const modulePages = [
   { path: '/community', title: 'Developer Community' },
@@ -61,11 +64,14 @@ export default function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
-          <Route path="/sign-in" element={<SignInPage />} />
-          <Route path="/sign-up" element={<SignUpPage />} />
+          <Route path="/sign-in" element={<GuestOnlyRoute><SignInPage /></GuestOnlyRoute>} />
+          <Route path="/sign-up" element={<GuestOnlyRoute><SignUpPage /></GuestOnlyRoute>} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route element={<ProtectedRoute enabled={isProfileApiEnabled()} />}>
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
           <Route path="/circles" element={<CirclesPage />} />
           <Route path="/circles/:circleId" element={<CirclesPage />} />
           <Route path="/circles/create" element={<CreateCirclePage />} />

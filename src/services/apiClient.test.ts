@@ -70,4 +70,22 @@ describe('authenticated API client', () => {
     await expect(request('/private', { requireAuthentication: true })).rejects.toMatchObject({ status: 401 })
     await expect(request('/private', { requireAuthentication: true })).rejects.toMatchObject({ status: 403 })
   })
+
+  it('explains network failures as possible network or CORS problems', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
+    const request = createApiClient('https://api.example')
+    await expect(request('/users/me/contributions')).rejects.toMatchObject({
+      status: 0,
+      message: expect.stringMatching(/network access and API Gateway CORS/i),
+    })
+  })
+
+  it.each([404, 500])('includes useful route/backend diagnostics for HTTP %i', async (status) => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status }))
+    const request = createApiClient('https://api.example')
+    await expect(request('/users/me/contributions')).rejects.toMatchObject({
+      status,
+      message: status === 404 ? expect.stringMatching(/route was not found/i) : expect.stringMatching(/backend returned an error/i),
+    })
+  })
 })

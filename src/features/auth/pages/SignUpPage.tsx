@@ -2,14 +2,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../auth/useAuth'
-
-const passwordRules = [
-  { label: 'At least 12 characters', test: (value: string) => value.length >= 12 },
-  { label: 'One lowercase letter', test: (value: string) => /[a-z]/.test(value) },
-  { label: 'One uppercase letter', test: (value: string) => /[A-Z]/.test(value) },
-  { label: 'One number', test: (value: string) => /\d/.test(value) },
-  { label: 'One symbol', test: (value: string) => /[^A-Za-z0-9]/.test(value) },
-]
+import { passwordRules, validatePassword, validateRegistration } from '../../../auth/passwordValidation'
 
 export function SignUpPage() {
   const auth = useAuth()
@@ -19,22 +12,20 @@ export function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [localError, setLocalError] = useState('')
 
-  const validPassword = passwordRules.every((rule) => rule.test(password))
+  const validPassword = validatePassword(password)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setLocalError('')
 
-    if (!validPassword) {
-      setLocalError('Please meet all password requirements.')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setLocalError('Passwords do not match.')
+    const validationError = validateRegistration(name, email, password, confirmPassword)
+    if (validationError) {
+      setLocalError(validationError)
       return
     }
 
@@ -51,8 +42,8 @@ export function SignUpPage() {
           state: { message: 'Your account is ready. Please sign in.' },
         })
       }
-    } catch {
-      setLocalError(auth.error || 'Unable to create your account. Please try again.')
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : auth.error || 'Unable to create your account. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -104,17 +95,22 @@ export function SignUpPage() {
 
             <label className="block text-sm font-medium text-slate-700">
               Password
+              <div className="mt-1.5 flex min-h-11 overflow-hidden rounded-lg border border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-200">
               <input
                 required
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 value={password}
+                aria-invalid={password.length > 0 && !validPassword}
+                aria-describedby="password-requirements"
                 onChange={(event) => setPassword(event.target.value)}
-                className="mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className="min-w-0 flex-1 px-3 outline-none"
               />
+              <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((show) => !show)} className="px-3 text-sm font-semibold text-indigo-700">{showPassword ? 'Hide' : 'Show'}</button>
+              </div>
             </label>
 
-            <div className="rounded-lg bg-slate-50 p-3">
+            <div id="password-requirements" className="rounded-lg bg-slate-50 p-3">
               <p className="mb-2 text-xs font-semibold text-slate-700">
                 Password requirements
               </p>
@@ -132,14 +128,17 @@ export function SignUpPage() {
 
             <label className="block text-sm font-medium text-slate-700">
               Confirm password
+              <div className="mt-1.5 flex min-h-11 overflow-hidden rounded-lg border border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-200">
               <input
                 required
-                type="password"
+                type={showConfirmation ? 'text' : 'password'}
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                className="mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className="min-w-0 flex-1 px-3 outline-none"
               />
+              <button type="button" aria-label={showConfirmation ? 'Hide confirmation password' : 'Show confirmation password'} onClick={() => setShowConfirmation((show) => !show)} className="px-3 text-sm font-semibold text-indigo-700">{showConfirmation ? 'Hide' : 'Show'}</button>
+              </div>
             </label>
 
             {(localError || auth.error) && (
@@ -149,7 +148,7 @@ export function SignUpPage() {
             )}
 
             <button
-              disabled={submitting || !validPassword || password !== confirmPassword}
+              disabled={submitting}
               type="submit"
               className="min-h-11 w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >

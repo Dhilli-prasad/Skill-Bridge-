@@ -354,6 +354,9 @@ export interface DeveloperProfile {
   interests: string[]
   githubUrl?: string
   linkedinUrl?: string
+  portfolioUrl?: string
+  experienceLevel?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'
+  avatarUrl?: string
   joinedAt: string
 }
 
@@ -366,4 +369,6 @@ export interface UpdateDeveloperProfileInput {
   interests: string[]
   githubUrl: string
   linkedinUrl: string
+  portfolioUrl?: string
+  experienceLevel?: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'
 }

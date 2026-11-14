@@ -8,6 +8,14 @@ interface TopbarProps {
   onMenuClick: () => void
 }
 
+function avatarInitials(displayName?: string, username?: string) {
+  const name = displayName?.trim()
+  if (name) return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+  const emailName = username?.split('@')[0]?.replace(/[._-]+/g, ' ').trim()
+  const words = emailName?.split(/\s+/).filter((part) => /[a-z]/i.test(part[0] ?? '')) ?? []
+  return words.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
+}
+
 export function Topbar({ mobileNavOpen, onMenuClick }: TopbarProps) {
   const auth = useAuth()
   const navigate = useNavigate()
@@ -20,7 +28,7 @@ export function Topbar({ mobileNavOpen, onMenuClick }: TopbarProps) {
         {searchOpen && <input autoFocus aria-label="Search SkillBridge" placeholder="Search SkillBridge..." className="w-40 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-indigo-500 focus:ring-2 sm:w-56" />}
         <button type="button" aria-label="Search" onClick={() => setSearchOpen((open) => !open)} className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Icon name="search" /></button>
         <div className="h-8 w-px bg-slate-200" />
-        {auth.status === 'authenticated' ? <button type="button" onClick={() => { void auth.signOut() }} className="flex min-h-11 items-center gap-2 rounded-lg p-1.5 hover:bg-slate-50" aria-label="Sign out"><div className="grid h-8 w-8 place-items-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">{(auth.user?.username ?? 'U').slice(0, 2).toUpperCase()}</div><span className="hidden text-sm font-medium text-slate-700 sm:block">Sign out</span></button> : <button type="button" onClick={() => navigate('/sign-in')} className="min-h-11 rounded-lg px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Sign in</button>}
+        {auth.status === 'authenticated' ? <button type="button" onClick={() => { void auth.signOut() }} className="flex min-h-11 items-center gap-2 rounded-lg p-1.5 hover:bg-slate-50" aria-label="Sign out"><div className="grid h-8 w-8 place-items-center rounded-full bg-violet-100 text-sm font-bold text-violet-700" aria-hidden="true">{avatarInitials(auth.displayName, auth.user?.username)}</div><span className="hidden text-sm font-medium text-slate-700 sm:block">Sign out</span></button> : <button type="button" onClick={() => navigate('/sign-in')} className="min-h-11 rounded-lg px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Sign in</button>}
       </div>
     </div>
   </header>

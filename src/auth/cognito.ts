@@ -3,6 +3,7 @@ import {
   confirmResetPassword,
   confirmSignUp,
   fetchAuthSession,
+  fetchUserAttributes,
   getCurrentUser,
   resendSignUpCode,
   resetPassword,
@@ -49,6 +50,16 @@ function requireCognito() {
 export function getCurrentCognitoUser(): Promise<AuthUser | undefined> {
   if (!configureCognito()) return Promise.resolve(undefined)
   return getCurrentUser().catch(() => undefined)
+}
+
+export async function getCognitoDisplayName() {
+  if (!configureCognito()) return undefined
+  try {
+    const attributes = await fetchUserAttributes()
+    return attributes.name?.trim() || undefined
+  } catch {
+    return undefined
+  }
 }
 
 export async function getAccessToken(forceRefresh = false) {

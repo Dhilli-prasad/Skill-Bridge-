@@ -14,7 +14,8 @@ export interface ApiAuthSession {
   clearSession?: () => void
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim().replace(/\/+$/, '') ?? ''
+export const isApiConfigured = () => Boolean(API_BASE_URL)
 let inMemoryAccessToken: string | undefined
 let authSession: ApiAuthSession | undefined
 
@@ -65,7 +66,14 @@ export function createApiClient(baseUrl: string, session?: ApiAuthSession) {
       headers.set('Accept', 'application/json')
       if (requestInit.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
       if (requestToken) headers.set('Authorization', `Bearer ${requestToken}`)
-      return fetch(requestUrl, { ...requestInit, headers })
+      try {
+        return await fetch(requestUrl, { ...requestInit, headers })
+      } catch (error) {
+        if (error instanceof TypeError) {
+          throw new ApiClientError(0, 'The browser could not reach the SkillBridge API. Check network access and API Gateway CORS for this page origin, including the request method and Authorization header.')
+        }
+        throw error
+      }
     }
     let response = await send(token)
     if (response.status === 401 && requireAuthentication && session) {
@@ -80,11 +88,20 @@ export function createApiClient(baseUrl: string, session?: ApiAuthSession) {
     }
     const payload: unknown = await response.json().catch(() => null)
     if (!response.ok) {
-      const message = payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'object' && payload.error !== null && 'message' in payload.error && typeof payload.error.message === 'string'
+      const backendMessage = payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'object' && payload.error !== null && 'message' in payload.error && typeof payload.error.message === 'string'
         ? payload.error.message
-        : response.status === 401 ? 'Your session has expired. Please sign in again.'
-          : response.status === 403 ? 'You are not authorized to perform this action.'
-            : 'SkillBridge API request failed.'
+        : undefined
+      const message = response.status === 401
+        ? 'The API rejected the access token (HTTP 401). Sign in again and retry.'
+        : response.status === 403
+          ? 'The authenticated account is not allowed to access this resource (HTTP 403).'
+          : response.status === 404
+            ? 'The API route was not found (HTTP 404). The staging backend may not include this route yet.'
+            : response.status >= 500
+              ? `The SkillBridge backend returned an error (HTTP ${response.status}). Try again later.${backendMessage ? ` ${backendMessage}` : ''}`
+              : backendMessage
+                ? `${backendMessage} (HTTP ${response.status})`
+                : `SkillBridge API request failed (HTTP ${response.status}).`
       throw new ApiClientError(response.status, message)
     }
     return payload as T
@@ -96,7 +113,7 @@ export function createApiClient(baseUrl: string, session?: ApiAuthSession) {
  * Existing localStorage services remain the source of truth until migration.
  */
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  if (!API_BASE_URL) throw new ApiClientError(0, 'SkillBridge API is not configured.')
+  if (!API_BASE_URL) throw new ApiClientError(0, 'SkillBridge API is not configured. Set VITE_API_BASE_URL to this environment’s CloudFormation ApiUrl output, then restart Vite or rebuild the Amplify branch.')
   const client = createApiClient(API_BASE_URL, authSession)
   if (inMemoryAccessToken) return client<T>(path, { ...options, accessToken: options.accessToken ?? inMemoryAccessToken })
   return client<T>(path, options)

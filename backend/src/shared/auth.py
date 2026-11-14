@@ -12,6 +12,7 @@ class AuthenticatedIdentity:
     user_id: str
     username: str | None = None
     email: str | None = None
+    name: str | None = None
 
 
 def _claims_from_request_context(request_context: Any) -> Mapping[str, Any] | None:
@@ -48,6 +49,7 @@ def get_authenticated_identity(event: Mapping[str, Any]) -> AuthenticatedIdentit
 
     return AuthenticatedIdentity(
         user_id=user_id.strip(),
-        username=optional_claim('username'),
+        username=optional_claim('username') or optional_claim('cognito:username'),
         email=optional_claim('email'),
+        name=optional_claim('name'),
     )

@@ -9,12 +9,15 @@ from src.projects.repository import ConflictError, InvalidCursorError, ProjectRe
 from src.projects.service import ForbiddenError, NotFoundError, ProjectService
 from src.shared.auth import UnauthorizedError, get_authenticated_identity
 from src.shared.validation import ValidationError
+from src.profiles.repository import ProfileRepository
+from src.profiles.service import ProfileService
 
 from src.shared.config import load_settings
 
 logger = logging.getLogger(__name__)
 project_repository = ProjectRepository()
 project_service = ProjectService(project_repository)
+profile_service = ProfileService(ProfileRepository())
 
 
 def _response(status_code: int, body: Mapping[str, Any]) -> dict[str, Any]:
@@ -104,6 +107,22 @@ def handler(event: Mapping[str, Any], context: Any) -> dict[str, Any]:
     try:
         identity = get_authenticated_identity(event)
         segments = _route_segments(path)
+        if method == 'GET' and segments == ['profiles', 'me']:
+            return _response(200, {'data': profile_service.get_profile(identity, 'me')})
+        if method == 'GET' and len(segments) == 2 and segments[0] == 'profiles':
+            return _response(200, {'data': profile_service.get_profile(identity, segments[1])})
+        if method == 'GET' and segments == ['profiles']:
+            raw_ids = _query_parameters(event).get('ids', '')
+            ids = raw_ids.split(',') if isinstance(raw_ids, str) and raw_ids else []
+            return _response(200, {'data': profile_service.get_profiles(identity, ids)})
+        if method == 'PUT' and segments == ['profiles', 'me']:
+            return _response(200, {'data': profile_service.update_profile(identity, _request_body(event))})
+        if method == 'POST' and segments == ['profiles', 'me', 'photo-upload']:
+            return _response(200, {'data': profile_service.create_photo_upload(identity, _request_body(event))})
+        if method == 'POST' and segments == ['profiles', 'me', 'photo']:
+            return _response(200, {'data': profile_service.complete_photo_upload(identity, _request_body(event))})
+        if method == 'DELETE' and segments == ['profiles', 'me', 'photo']:
+            return _response(200, {'data': profile_service.remove_photo(identity)})
         if method == 'GET' and segments == ['projects']:
             query = _query_parameters(event)
             limit, cursor = _pagination(query)
