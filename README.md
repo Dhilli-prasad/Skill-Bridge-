@@ -1,90 +1,299 @@
 # SkillBridge
 
-**From skills to shipped projects.**
+### Learn, Discover, Code and Collaborate
 
-SkillBridge is a React and TypeScript developer ecosystem for discovery, learning, coding practice, project collaboration, and contribution history. The repository includes a local-first frontend experience and a modular AWS SAM backend foundation for authenticated project collaboration and Developer Passport records.
+An online development platform, allowing users to learn, discover other developers, practice coding and collaborate on projects.
 
-## Repository layout
+This is aimed at helping students and developers improve their skills, connect with others and get hands-on experience.
 
-- `src/` — Vite React frontend, feature pages, reusable components, mock data, localStorage services, Cognito integration, and API client.
-- `src/features/` — Dashboard, Community, Learning Hub, Code Arena, Learning Circles, Skill Exchange, Project Collaboration, and Developer Passport.
-- `src/services/` — local persistence services and the isolated authenticated API client.
-- `backend/src/` — Python Lambda application, project services, DynamoDB repository, validation, and Cognito-claim handling.
-- `backend/tests/` — mocked backend unit tests that do not require AWS credentials or deployed resources.
-- `backend/template.yaml` — AWS SAM infrastructure definition.
-- `backend/config/` — non-secret environment documentation.
-- `docs/` — supporting project documentation.
+The project includes a React and Typescript frontend and an AWS based serverless backend providing authentication and collaboration.
 
-## Local frontend setup
+**Live link:** https://main.d3j0bg739p5k2s.amplifyapp.com
 
-Requirements: Node.js/npm.
+---
 
-```powershell
+## Project Overview
+
+Whilst it is always important to learn development skills, getting hands-on experience can sometimes be hard. This could be due to finding collaborators and opportunities, and keeping track of how much you have contributed to your projects.
+
+SkillBridge helps to provide everything in one place.
+
+Users can browse the various sections of the site, practice coding, discover developers, exchange skills and collaborate on projects.
+
+Overall the goal is to provide a link between learning and actually building projects.
+
+## Features
+
+The application has several modules:
+
+| Module | Overview |
+|---|---|
+| Dashboard | Gives an overview of the platform and developers activity |
+| Developer Community | Discover the developer community |
+| Learning Hub | Browse learning related content |
+| Code Arena | Practice coding |
+| Learning Circles | Collaborate whilst learning |
+| Skill Exchange | Discover opportunities to exchange skills |
+| Project Collaboration | Create projects and collaborate |
+| Developer Passport | View developer profile and contributions |
+
+The features and data available will depend on what Mode the application is in.
+
+## Project Collaboration
+
+Project Collaboration is one of the main sections of the application.
+
+The process should be:
+
+1. User creates a new project.
+2. Other developers see the project.
+3. Developers interested in the project ask to join.
+4. Project owner approves and manages requests.
+5. Developers approved join the project.
+6. Information on the project and contributions can be viewed via the Developer Passport.
+
+AWS provides the infrastructure for authenticated collaboration and storing data.
+
+## Tech Stack
+
+### Frontend
+
+- React
+- Typescript
+- Vite
+- Tailwind CSS
+- React Router
+- Lucide Icons
+
+### Backend
+
+- Python 3.12
+- AWS Lambda
+- AWS Serverless Application Model (SAM)
+- Amazon API Gateway
+- Amazon DynamoDB
+
+### Authentication & Hosting
+
+- Amazon Cognito
+- AWS Amplify
+- Amazon CloudWatch
+
+Amazon S3 is used for storing profile images.
+
+## AWS Infrastructure
+
+The backend is built using a serverless architecture.
+
+```text
+React + TypeScript
+|
+v
+Amazon Cognito
+Authentication
+|
+v
+Amazon API Gateway
+JWT Authorizer
+|
+v
+AWS Lambda
+Python Backend
+|
+v
+Amazon DynamoDB
+```
+
+AWS Amplify hosts the frontend. Amazon Cognito handles authentication. Amazon API Gateway provides the HTTP API and validates JWTs. AWS Lambda runs the backend logic. Amazon DynamoDB stores data relating to the application and collaboration. Amazon CloudWatch provides logging and monitoring of the backend. Amazon S3 provides private storage for profile images.
+
+Only verified claims from Cognito are used to identify authenticated users. All authorisation is managed on the server side.
+
+## Modes
+
+There are two modes for the frontend.
+
+### Local Demo Mode
+
+This is the default mode and uses mock data. It also stores data within the browsers localstorage.
+
+This should not be confused with the real backend with authentication.
+
+### AWS API Mode
+
+The application can be connected to the deployed backend. Amazon Cognito and API Gateway are used.
+
+The Project Collaboration and Developer Passport modules can be configured to run in API mode.
+
+All protected API calls will use Cognito access tokens. If there is a problem with the API, this will be shown to the user.
+
+## Running Locally
+
+### Requirements
+
+- Node.js
+- npm
+- Git
+
+### 1. Clone the Repo
+
+```bash
+git clone YOUR_REPOSITORY_URL
+cd SkillBridge
+```
+
+Ensure you replace YOUR_REPOSITORY_URL with your actual GitHub repo.
+
+### 2. Install Dependencies
+
+```bash
 npm install
+```
+
+### 3. Run Development Server
+
+```bash
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`.
+Open:
 
-The default frontend mode is local demo mode. It uses existing mock data and localStorage services without pretending that a real user is authenticated. Do not add secrets to Vite environment files.
+```text
+http://127.0.0.1:5173
+```
 
-## Cognito and AWS API mode
+This will run the application in local demo mode.
 
-The frontend uses AWS Amplify Auth v6 with a Cognito User Pool and public app client. It signs in with SRP (no client secret), restores the session from tab-scoped session storage, refreshes access tokens through Amplify, and clears expired sessions. Copy `.env.example` to `.env.local` only when a reviewed backend environment is available. The six supported Vite variables are:
+## Backend
 
-- `VITE_API_BASE_URL` — deployed API Gateway stage URL.
-- `VITE_COGNITO_REGION` — deployed Cognito region.
-- `VITE_COGNITO_USER_POOL_ID` — Cognito User Pool output.
-- `VITE_COGNITO_USER_POOL_CLIENT_ID` — public Cognito app-client output.
-- `VITE_PROJECT_COLLABORATION_MODE=api` and/or `VITE_DEVELOPER_PASSPORT_MODE=api` — explicit module opt-in.
+The backend source code and AWS infrastructure can be found in the backend/.
 
-The Cognito values are public identifiers; never set a client secret or AWS credential in Vite variables. Access tokens are attached as bearer tokens to protected API requests. Protected API failures are shown to the user and never silently fall back to localStorage or demo data. Keep both mode switches unset to preserve the local demo experience.
+### Requirements
 
-## Backend prerequisites
+- Python 3.12
+- AWS CLI
+- AWS SAM CLI
 
-Requirements: Python 3.12, AWS SAM CLI, and AWS CLI. AWS credentials are required only for deployment or live AWS checks and must be provided outside the repository through an approved profile or environment mechanism.
+### Install Dev Dependencies
 
-From `backend/`:
+Navigate to the root of the repo:
+
+```bash
+cd backend
+python -m venv .venv
+```
+
+If using Windows PowerShell:
 
 ```powershell
-python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+Then:
+
+```bash
 pip install -r requirements-dev.txt
+```
+
+### Run Tests
+
+```bash
 pytest -q
+```
+
+### Validate SAM Template
+
+```bash
 sam validate --template-file template.yaml --lint
+```
+
+### Build
+
+```bash
 sam build --template-file template.yaml
 ```
 
-The Lambda `CodeUri` is `backend/src/`; its runtime dependency manifest is `backend/src/requirements.txt`. Development-only test dependencies are in `backend/requirements-dev.txt`.
+This will locally test, validate and build the application. Nothing will be deployed.
 
-## AWS architecture
+## Frontend Configuration
 
-The SAM template defines one environment-scoped Cognito User Pool and public web client, API Gateway HTTP API with a Cognito JWT authorizer, one Python 3.12 Lambda, one on-demand DynamoDB single table with `PK`/`SK` and `GSI1`, and a retained CloudWatch log group. S3 and Step Functions are not provisioned. The backend uses verified Cognito claims for identity and server-side project authorization; client-supplied user IDs and roles are not trusted.
+To run in AWS API mode, you need to copy the .env.example file to .env.local. Within the file enter all the public details for Cognito and API.
 
-No AWS resources are deployed by local setup or verification commands. Review `backend/DEPLOYMENT_READINESS.md` and `backend/README.md` before any deployment approval.
+Variables available:
 
-## Verification commands
+- VITE_API_BASE_URL
+- VITE_COGNITO_REGION
+- VITE_COGNITO_USER_POOL_ID
+- VITE_COGNITO_USER_POOL_CLIENT_ID
+- VITE_PROJECT_COLLABORATION_MODE
+- VITE_DEVELOPER_PASSPORT_MODE
+
+Do not include any AWS secrets, private keys, client secrets or access tokens in the environment variables.
+
+## Testing
 
 Frontend:
 
-```powershell
+```bash
 npm run test
 npm run lint
 npm run build
 ```
 
-Backend and infrastructure:
+Backend:
 
-```powershell
+```bash
+cd backend
 pytest -q
-sam validate --template-file backend/template.yaml --lint
-sam build --template-file backend/template.yaml
 ```
 
-The frontend tests cover authentication state and API token/error behavior. Backend tests use mocked DynamoDB behavior. Deployed AWS integration tests must be reported separately from local tests.
+The unit tests on the backend use mocks for AWS so no AWS resources are required to be deployed.
 
-## Upload and secret hygiene
+Local tests & AWS integration tests should be considered separately.
 
-The repository intentionally keeps safe source, tests, templates, lockfiles, and placeholder `.env.example` files. `.gitignore` excludes environment files, AWS credential directories, private keys, dependencies, Python caches, SAM build artifacts, build output, test coverage, and infrastructure state. Before publishing, scan the working tree for secrets and confirm that no real `.env`, credentials, private key, or generated artifact is included.
+## Repo Structure
 
-Do not commit AWS access keys, Cognito tokens, client secrets, local `.env` files, or outputs containing account-sensitive information.
+```text
+SkillBridge/
+├── src/
+│   ├── features/
+│   ├── services/
+│   └── ...
+├── backend/
+│   ├── src/
+│   ├── tests/
+│   ├── config/
+│   └── template.yaml
+├── docs/
+├── public/
+├── .env.example
+├── package.json
+└── README.md
+```
+
+## Security
+
+Authentication is handled via Amazon Cognito. Protected API routes are authorised using JWT. Verified claims are used to identify who the user is. Authorisation for projects are handled by the backend. Do not commit any secrets or AWS credentials. Profile images are meant to be kept private.
+
+## Project Status
+
+This is an active project. The frontend contains the main functionalities of the platform and the backend provides the serverless infrastructure for authenticated collaboration and keeping track of contributions.
+
+Some parts of the application use local demo data however some modules can be connected to the AWS backend. Consider what Mode the application is in.
+
+## Future Development
+
+Future development could include:
+
+- Better developer matching.
+- More project task and milestones.
+- More detailed contribution tracking.
+- More learning and collaboration features.
+- More detailed developer profiles.
+
+---
+
+## Vision
+
+SkillBridge aims to make it easier for developers to progress from learning individual skills to working collaboratively on projects.
+
+**Learn Together. Build Together. Grow Together.**
